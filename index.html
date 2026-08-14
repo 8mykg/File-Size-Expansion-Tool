@@ -1,50 +1,205 @@
+<!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>ダミー画像・ファイルサイズ拡張ツール</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>File Resizer Pro | ダミーファイルサイズ調整ツール</title>
+  <style>
+    /* 全体のスタイル設定 */
+    :root {
+      --bg-color: #0f172a;
+      --card-bg: #1e293b;
+      --accent: #38bdf8;
+      --accent-hover: #0284c7;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --border-color: #334155;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+    }
+
+    /* メインカード */
+    .container {
+      background-color: var(--card-bg);
+      padding: 40px;
+      border-radius: 16px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+      border: 1px solid var(--border-color);
+      width: 100%;
+      max-width: 480px;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      margin-top: 0;
+      margin-bottom: 24px;
+      text-align: center;
+      color: var(--accent);
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    input[type="file"],
+    input[type="number"],
+    select {
+      width: 100%;
+      padding: 12px;
+      background-color: #0f172a;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      color: var(--text-main);
+      font-size: 0.95rem;
+      box-sizing: border-box;
+      transition: border-color 0.2s;
+    }
+
+    input[type="file"]:focus,
+    input[type="number"]:focus,
+    select:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    /* ボタン */
+    .btn {
+      width: 100%;
+      padding: 14px;
+      background-color: var(--accent);
+      color: #0f172a;
+      font-weight: bold;
+      font-size: 1rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.2s, transform 0.1s;
+      margin-top: 10px;
+    }
+
+    .btn:hover {
+      background-color: var(--accent-hover);
+      color: #fff;
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    /* 補足ノート */
+    .note {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 16px;
+      line-height: 1.4;
+      background: rgba(255, 255, 255, 0.03);
+      padding: 10px;
+      border-radius: 6px;
+    }
+  </style>
 </head>
 <body>
-  <h2>ファイルサイズ巨大化ツール</h2>
-  <input type="file" id="fileInput"><br><br>
-  
-  <label>目標のサイズ (MB): </label>
-  <input type="number" id="targetMb" value="10" min="1"><br><br>
 
-  <button onclick="processFile()">拡張してダウンロード</button>
+  <div class="container">
+    <h1>File Resizer Pro</h1>
+
+    <div class="form-group">
+      <label for="fileInput">ファイルを選択</label>
+      <input type="file" id="fileInput">
+    </div>
+
+    <div class="form-group">
+      <label for="targetMb">目標のファイルサイズ (MB)</label>
+      <input type="number" id="targetMb" value="10" min="0.1" step="0.1">
+    </div>
+
+    <div class="form-group">
+      <label for="modeSelect">処理モード</label>
+      <select id="modeSelect">
+        <option value="auto">自動（指定サイズに合わせる）</option>
+        <option value="pad">強制パディング（指定MBを末尾に追加）</option>
+        <option value="trim">強制トリミング（指定MBに強制カット）</option>
+      </select>
+    </div>
+
+    <button class="btn" onclick="processFile()">ファイルを変換＆ダウンロード</button>
+
+    <div class="note">
+      ※ 削る（トリミング）処理を行うと、画像や動画などのファイルは正常に開けなくなる（データ破損する）場合がありますが、異常系テスト用途には正常な動作です。
+    </div>
+  </div>
 
   <script>
     async function processFile() {
       const fileInput = document.getElementById('fileInput');
       const targetMb = parseFloat(document.getElementById('targetMb').value);
+      const mode = document.getElementById('modeSelect').value;
 
       if (!fileInput.files.length) {
         alert("ファイルを選択してね！");
         return;
       }
 
-      const file = fileInput.files[0];
-      const targetBytes = targetMb * 1024 * 1024;
-
-      if (file.size >= targetBytes) {
-        alert("元のファイルの方が大きいよ！");
+      if (isNaN(targetMb) || targetMb <= 0) {
+        alert("正しいサイズを入力してね！");
         return;
       }
 
-      // 元ファイルを ArrayBuffer として読み込み
-      const arrayBuffer = await file.arrayBuffer();
-      
-      // 目標サイズまでの不足分（ゼロ埋め用のパディング）を作成
-      const paddingSize = targetBytes - file.size;
-      const padding = new Uint8Array(paddingSize);
+      const file = fileInput.files[0];
+      const targetBytes = Math.floor(targetMb * 1024 * 1024);
+      let finalBlob;
 
-      // 元のデータとパディングを結合
-      const blob = new Blob([arrayBuffer, padding], { type: file.type });
+      if (mode === 'pad') {
+        // パディング（純粋に追加）
+        const arrayBuffer = await file.arrayBuffer();
+        const padding = new Uint8Array(targetBytes);
+        finalBlob = new Blob([arrayBuffer, padding], { type: file.type });
 
-      // ダウンロード用のリンクを生成して自動クリック
-      const url = URL.createObjectURL(blob);
+      } else if (mode === 'trim') {
+        // トリミング（指定サイズで切る）
+        finalBlob = file.slice(0, targetBytes, file.type);
+
+      } else {
+        // 自動判定モード
+        if (file.size === targetBytes) {
+          alert("最初から指定されたサイズと同じだよ！");
+          return;
+        }
+
+        if (file.size < targetBytes) {
+          // 不足分を埋めて指定サイズにぴったり合わせる
+          const arrayBuffer = await file.arrayBuffer();
+          const paddingSize = targetBytes - file.size;
+          const padding = new Uint8Array(paddingSize);
+          finalBlob = new Blob([arrayBuffer, padding], { type: file.type });
+        } else {
+          // 大きいので指定サイズまで削る
+          finalBlob = file.slice(0, targetBytes, file.type);
+        }
+      }
+
+      // ファイルダウンロード処理
+      const url = URL.createObjectURL(finalBlob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `padded_${file.name}`;
+      a.download = `resized_${file.name}`;
       a.click();
       URL.revokeObjectURL(url);
     }
