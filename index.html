@@ -1,0 +1,53 @@
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>ダミー画像・ファイルサイズ拡張ツール</title>
+</head>
+<body>
+  <h2>ファイルサイズ巨大化ツール</h2>
+  <input type="file" id="fileInput"><br><br>
+  
+  <label>目標のサイズ (MB): </label>
+  <input type="number" id="targetMb" value="10" min="1"><br><br>
+
+  <button onclick="processFile()">拡張してダウンロード</button>
+
+  <script>
+    async function processFile() {
+      const fileInput = document.getElementById('fileInput');
+      const targetMb = parseFloat(document.getElementById('targetMb').value);
+
+      if (!fileInput.files.length) {
+        alert("ファイルを選択してね！");
+        return;
+      }
+
+      const file = fileInput.files[0];
+      const targetBytes = targetMb * 1024 * 1024;
+
+      if (file.size >= targetBytes) {
+        alert("元のファイルの方が大きいよ！");
+        return;
+      }
+
+      // 元ファイルを ArrayBuffer として読み込み
+      const arrayBuffer = await file.arrayBuffer();
+      
+      // 目標サイズまでの不足分（ゼロ埋め用のパディング）を作成
+      const paddingSize = targetBytes - file.size;
+      const padding = new Uint8Array(paddingSize);
+
+      // 元のデータとパディングを結合
+      const blob = new Blob([arrayBuffer, padding], { type: file.type });
+
+      // ダウンロード用のリンクを生成して自動クリック
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `padded_${file.name}`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+  </script>
+</body>
+</html>
