@@ -14,7 +14,7 @@
 - **インストール不要**: ブラウザだけで動きます
 
 ## 🔗 ライブデモ
-[ツールを使ってみる]([https://あなたのユーザー名.github.io/リポジトリ名/](https://8mykg.github.io/File-Size-Expansion-Tool/))
+[ツールを使ってみる]([https://8mykg.github.io/File-Size-Expansion-Tool/])
 
 ## 🛠️ 使い方
 1. ファイルを選択します。
